@@ -1,11 +1,13 @@
-name: basic
+name: auto
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   firsttime:
     runs-on: ubuntu-latest
     steps:
       - run: echo hello
-      - run: echo see you tomorrow
+      - run: echo ci rocks
