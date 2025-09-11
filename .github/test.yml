@@ -1,0 +1,11 @@
+name: basic
+
+on:
+  workflow_dispatch:
+
+jobs:
+  firsttime:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello
+      - run: echo see you tomorrow
