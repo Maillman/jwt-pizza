@@ -201,8 +201,8 @@ async function basicInit(page) {
 test("login", async ({ page }) => {
   await basicInit(page);
   await page.getByRole("link", { name: "Login" }).click();
-  await page.getByRole("textbox", { name: "Email address" }).fill("d@jwt.com");
-  await page.getByRole("textbox", { name: "Password" }).fill("a");
+  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("admin");
   await page.getByRole("button", { name: "Login" }).click();
 
   await expect(page.getByRole("link", { name: "KC" })).toBeVisible();
@@ -224,9 +224,9 @@ test("purchase with login", async ({ page }) => {
 
   // Login
   await page.getByPlaceholder("Email address").click();
-  await page.getByPlaceholder("Email address").fill("d@jwt.com");
+  await page.getByPlaceholder("Email address").fill("a@jwt.com");
   await page.getByPlaceholder("Email address").press("Tab");
-  await page.getByPlaceholder("Password").fill("a");
+  await page.getByPlaceholder("Password").fill("admin");
   await page.getByRole("button", { name: "Login" }).click();
 
   // Pay
@@ -243,7 +243,7 @@ test("purchase with login", async ({ page }) => {
 });
 
 test("view footer pages", async ({ page }) => {
-  await page.goto("http://localhost:5173/");
+  await basicInit(page);
 
   await page.getByRole("link", { name: "About" }).click();
   await expect(page.getByText("The secret sauce")).toBeVisible();
@@ -254,13 +254,10 @@ test("view footer pages", async ({ page }) => {
   await expect(page.getByText("Mama Rucci, my my")).toBeVisible();
 });
 
-test("register franchise and create a franchise and stores for franchise", async ({
-  page,
-}) => {
+test("register and logout", async ({ page }) => {
   await basicInit(page);
 
-  await page.goto("http://localhost:5173/");
-
+  // Register new user and logout
   await page.getByRole("link", { name: "Register" }).click();
   await page
     .getByRole("textbox", { name: "Full name" })
@@ -274,7 +271,12 @@ test("register franchise and create a franchise and stores for franchise", async
     page.getByText("The web's best pizza", { exact: true })
   ).toBeVisible();
   await page.getByRole("link", { name: "Logout" }).click();
+});
 
+test("create franchise", async ({ page }) => {
+  await basicInit(page);
+
+  // Login admin
   await page.getByRole("link", { name: "Login" }).click();
   await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
   await page.getByRole("textbox", { name: "Password" }).fill("admin");
@@ -283,6 +285,7 @@ test("register franchise and create a franchise and stores for franchise", async
     page.getByText("The web's best pizza", { exact: true })
   ).toBeVisible();
 
+  // Add franchisee
   await page.getByRole("link", { name: "Admin" }).click();
   await expect(page.getByText("Mama Ricci's kitchen")).toBeVisible();
   await page.getByRole("button", { name: "Add Franchise" }).click();
@@ -296,7 +299,12 @@ test("register franchise and create a franchise and stores for franchise", async
   await expect(page.getByText("Mama Ricci's kitchen")).toBeVisible();
 
   await page.getByRole("link", { name: "Logout" }).click();
+});
 
+test("create store", async ({ page }) => {
+  await basicInit(page);
+
+  // Login as franchisee
   await page.getByRole("link", { name: "Login" }).click();
   await page
     .getByRole("textbox", { name: "Email address" })
@@ -307,6 +315,7 @@ test("register franchise and create a franchise and stores for franchise", async
     page.getByText("The web's best pizza", { exact: true })
   ).toBeVisible();
 
+  // Create store
   await page
     .getByLabel("Global")
     .getByRole("link", { name: "Franchise" })
