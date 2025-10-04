@@ -25,7 +25,7 @@ async function basicInit(page) {
     },
   };
 
-  // Authorize login for the given user
+  // Enable login/logout/register for the given user
   await page.route("*/**/api/auth", async (route, request) => {
     if (request.method() === "POST") {
       const { name, email, password } = route.request().postDataJSON();
@@ -114,6 +114,76 @@ async function basicInit(page) {
     await route.fulfill({ json: franchiseRes });
   });
 
+  // Create a new franchise
+  await page.route("*/**/api/franchise", async (route) => {
+    const franchiseReq = route.request().postDataJSON();
+
+    if (franchiseReq.admins.length === 0) {
+      await route.fulfill({ status: 400, json: { error: "Bad Request" } });
+      return;
+    }
+    const franchisee = validUsers[franchiseReq.admins[0].email];
+    if (!franchisee) {
+      await route.fulfill({ status: 404, json: { error: "Not Found" } });
+      return;
+    }
+
+    const franchiseRes = {
+      stores: [],
+      id: 1,
+      name: franchiseReq.name,
+      admins: [
+        {
+          email: franchisee.email,
+          id: franchisee.id,
+          name: franchiseReq.name,
+        },
+      ],
+    };
+
+    expect(route.request().method()).toBe("POST");
+    await route.fulfill({ json: franchiseRes });
+  });
+
+  // Gets the user's franchise
+  await page.route("*/**/api/franchise/**", async (route) => {
+    const franchiseRes = [
+      {
+        id: 1,
+        name: "Brand New Franchise",
+        admins: [
+          {
+            id: 5,
+            name: "My New Franchise",
+            email: "newFranchise@jwt.com",
+          },
+        ],
+        stores: [
+          {
+            id: 1,
+            name: "a whole new store",
+            totalRevenue: 0,
+          },
+        ],
+      },
+    ];
+    expect(route.request().method()).toBe("GET");
+    await route.fulfill({ json: franchiseRes });
+  });
+
+  // Create a new store
+  await page.route("*/**/api/franchise/**/store", async (route) => {
+    const storeReq = route.request().postDataJSON();
+    const storeRes = {
+      id: 1,
+      franchiseId: 1,
+      name: storeReq.name,
+    };
+
+    expect(route.request().method()).toBe("POST");
+    await route.fulfill({ json: storeRes });
+  });
+
   // Order a pizza.
   await page.route("*/**/api/order", async (route) => {
     const orderReq = route.request().postDataJSON();
@@ -188,76 +258,6 @@ test("register franchise and create a franchise and stores for franchise", async
   page,
 }) => {
   await basicInit(page);
-
-  await page.route("*/**/api/franchise", async (route) => {
-    const franchiseReq = {
-      stores: [],
-      id: "",
-      name: "Brand New Franchise",
-      admins: [
-        {
-          email: "newFranchise@jwt.com",
-        },
-      ],
-    };
-    const franchiseRes = {
-      stores: [],
-      id: 2,
-      name: "Brand New Franchise",
-      admins: [
-        {
-          email: "newFranchise@jwt.com",
-          id: 5,
-          name: "My New Franchise",
-        },
-      ],
-    };
-
-    expect(route.request().method()).toBe("POST");
-    expect(route.request().postDataJSON()).toMatchObject(franchiseReq);
-    await route.fulfill({ json: franchiseRes });
-  });
-
-  await page.route("*/**/api/franchise/**", async (route) => {
-    const franchiseRes = [
-      {
-        id: 2,
-        name: "Brand New Franchise",
-        admins: [
-          {
-            id: 5,
-            name: "My New Franchise",
-            email: "newFranchise@jwt.com",
-          },
-        ],
-        stores: [
-          {
-            id: 1,
-            name: "a whole new store",
-            totalRevenue: 0,
-          },
-        ],
-      },
-    ];
-    expect(route.request().method()).toBe("GET");
-    await route.fulfill({ json: franchiseRes });
-  });
-
-  await page.route("*/**/api/franchise/**/store", async (route) => {
-    const storeReq = {
-      id: "",
-      name: "a whole new store",
-    };
-    const storeRes = {
-      id: 1,
-      franchiseId: 2,
-      name: "a whole new store",
-    };
-
-    expect(route.request().method()).toBe("POST");
-    expect(route.request().postDataJSON()).toMatchObject(storeReq);
-    await route.fulfill({ json: storeRes });
-  });
 
   await page.goto("http://localhost:5173/");
 
