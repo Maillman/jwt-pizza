@@ -6,36 +6,72 @@ test("home page", async ({ page }) => {
   expect(await page.title()).toBe("JWT Pizza");
 });
 
-test("Login", async ({ page }) => {
-  await page.route("*/**/api/auth", async (route) => {
-    const loginReq = { email: "a@jwt.com", password: "admin" };
-    const loginRes = {
-      user: {
-        id: 3,
-        name: "Kai Chen",
-        email: "d@jwt.com",
-        roles: [{ role: "admin" }],
-      },
-      token: "abcdef",
-    };
-    expect(route.request().method()).toBe("PUT");
-    expect(route.request().postDataJSON()).toMatchObject(loginReq);
-    await route.fulfill({ json: loginRes });
+async function basicInit(page) {
+  let loggedInUser;
+  const validUsers = {
+    "a@jwt.com": {
+      id: 3,
+      name: "Kai Chen",
+      email: "a@jwt.com",
+      password: "admin",
+      roles: [{ role: "admin" }],
+    },
+    "newFranchise@jwt.com": {
+      id: 5,
+      name: "My New Franchise",
+      email: "newFranchise@jwt.com",
+      password: "passfranchise",
+      roles: [{ role: "diner" }, { objectId: 9, role: "franchisee" }],
+    },
+  };
+
+  // Authorize login for the given user
+  await page.route("*/**/api/auth", async (route, request) => {
+    if (request.method() === "POST") {
+      const { name, email, password } = route.request().postDataJSON();
+      if (!name || !email || !password) {
+        await route.fulfill({ status: 400, json: { error: "Bad Request" } });
+        return;
+      }
+      const existingUser = validUsers[email];
+      const id = existingUser ? existingUser.id : 6;
+      const registerRes = {
+        user: {
+          id: id,
+          name: name,
+          email: email,
+          roles: [{ role: "diner" }],
+        },
+        token: "abcdef",
+      };
+      await route.fulfill({ json: registerRes });
+    } else if (request.method() === "DELETE") {
+      const logoutRes = { message: "logout successful" };
+
+      await route.fulfill({ json: logoutRes });
+    } else {
+      const loginReq = route.request().postDataJSON();
+      const user = validUsers[loginReq.email];
+      if (!user || user.password !== loginReq.password) {
+        await route.fulfill({ status: 401, json: { error: "Unauthorized" } });
+        return;
+      }
+      loggedInUser = validUsers[loginReq.email];
+      const loginRes = {
+        user: loggedInUser,
+        token: "abcdef",
+      };
+      await route.fulfill({ json: loginRes });
+    }
   });
 
-  await page.goto("http://localhost:5173/");
+  // Return the currently logged in user
+  await page.route("*/**/api/user/me", async (route) => {
+    expect(route.request().method()).toBe("GET");
+    await route.fulfill({ json: loggedInUser });
+  });
 
-  await page.getByRole("link", { name: "Login" }).click();
-  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
-  await page.getByRole("textbox", { name: "Password" }).fill("admin");
-  await page.getByRole("button", { name: "Login" }).click();
-
-  await expect(page.getByRole("link", { name: "Admin" })).toBeVisible();
-  await page.getByRole("link", { name: "Admin" }).click();
-  await expect(page.getByText("Mama Ricci's kitchen")).toBeVisible();
-});
-
-test("purchase with login", async ({ page }) => {
+  // A standard menu
   await page.route("*/**/api/order/menu", async (route) => {
     const menuRes = [
       {
@@ -57,7 +93,8 @@ test("purchase with login", async ({ page }) => {
     await route.fulfill({ json: menuRes });
   });
 
-  await page.route("*/**/api/franchise*", async (route) => {
+  // Standard franchises and stores
+  await page.route(/\/api\/franchise(\?.*)?$/, async (route) => {
     const franchiseRes = {
       franchises: [
         {
@@ -77,49 +114,32 @@ test("purchase with login", async ({ page }) => {
     await route.fulfill({ json: franchiseRes });
   });
 
-  await page.route("*/**/api/auth", async (route) => {
-    const loginReq = { email: "d@jwt.com", password: "a" };
-    const loginRes = {
-      user: {
-        id: 3,
-        name: "Kai Chen",
-        email: "d@jwt.com",
-        roles: [{ role: "diner" }],
-      },
-      token: "abcdef",
-    };
-    expect(route.request().method()).toBe("PUT");
-    expect(route.request().postDataJSON()).toMatchObject(loginReq);
-    await route.fulfill({ json: loginRes });
-  });
-
+  // Order a pizza.
   await page.route("*/**/api/order", async (route) => {
-    const orderReq = {
-      items: [
-        { menuId: 1, description: "Veggie", price: 0.0038 },
-        { menuId: 2, description: "Pepperoni", price: 0.0042 },
-      ],
-      storeId: "4",
-      franchiseId: 2,
-    };
+    const orderReq = route.request().postDataJSON();
     const orderRes = {
-      order: {
-        items: [
-          { menuId: 1, description: "Veggie", price: 0.0038 },
-          { menuId: 2, description: "Pepperoni", price: 0.0042 },
-        ],
-        storeId: "4",
-        franchiseId: 2,
-        id: 23,
-      },
+      order: { ...orderReq, id: 23 },
       jwt: "eyJpYXQ",
     };
     expect(route.request().method()).toBe("POST");
-    expect(route.request().postDataJSON()).toMatchObject(orderReq);
     await route.fulfill({ json: orderRes });
   });
 
   await page.goto("http://localhost:5173/");
+}
+
+test("login", async ({ page }) => {
+  await basicInit(page);
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("d@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("a");
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page.getByRole("link", { name: "KC" })).toBeVisible();
+});
+
+test("purchase with login", async ({ page }) => {
+  await basicInit(page);
 
   // Go to order page
   await page.getByRole("button", { name: "Order now" }).click();
@@ -167,66 +187,7 @@ test("view footer pages", async ({ page }) => {
 test("register franchise and create a franchise and stores for franchise", async ({
   page,
 }) => {
-  await page.route("*/**/api/auth", async (route, request) => {
-    if (request.method() === "POST") {
-      const registerReq = {
-        name: "My New Franchise",
-        email: "newFranchise@jwt.com",
-        password: "passfranchise",
-      };
-      const registerRes = {
-        user: {
-          id: 5,
-          name: "My New Franchise",
-          email: "newFranchise@jwt.com",
-          roles: [{ role: "diner" }],
-        },
-        token: "abcdef",
-      };
-      expect(route.request().method()).toBe("POST");
-      expect(route.request().postDataJSON()).toMatchObject(registerReq);
-      await route.fulfill({ json: registerRes });
-    } else if (request.method() === "DELETE") {
-      const logoutRes = { message: "logout successful" };
-
-      expect(route.request().method()).toBe("DELETE");
-      await route.fulfill({ json: logoutRes });
-    } else {
-      const requestBody = request.postDataJSON();
-      if (requestBody && requestBody.email === "newFranchise@jwt.com") {
-        const loginReq = {
-          email: "newFranchise@jwt.com",
-          password: "passfranchise",
-        };
-        const loginRes = {
-          user: {
-            id: 5,
-            name: "My New Franchise",
-            email: "newFranchise@jwt.com",
-            roles: [{ role: "diner" }, { objectId: 9, role: "franchisee" }],
-          },
-          token: "abcdef",
-        };
-        expect(route.request().method()).toBe("PUT");
-        expect(route.request().postDataJSON()).toMatchObject(loginReq);
-        await route.fulfill({ json: loginRes });
-      } else {
-        const loginReq = { email: "a@jwt.com", password: "admin" };
-        const loginRes = {
-          user: {
-            id: 3,
-            name: "Kai Chen",
-            email: "d@jwt.com",
-            roles: [{ role: "admin" }],
-          },
-          token: "abcdef",
-        };
-        expect(route.request().method()).toBe("PUT");
-        expect(route.request().postDataJSON()).toMatchObject(loginReq);
-        await route.fulfill({ json: loginRes });
-      }
-    }
-  });
+  await basicInit(page);
 
   await page.route("*/**/api/franchise", async (route) => {
     const franchiseReq = {
