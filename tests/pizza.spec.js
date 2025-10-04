@@ -18,7 +18,7 @@ async function basicInit(page) {
     },
     "newFranchise@jwt.com": {
       id: 5,
-      name: "My New Franchise",
+      name: "A New Franchise",
       email: "newFranchise@jwt.com",
       password: "passfranchise",
       roles: [{ role: "diner" }, { objectId: 9, role: "franchisee" }],
@@ -146,29 +146,35 @@ async function basicInit(page) {
   });
 
   // Gets the user's franchise
-  await page.route("*/**/api/franchise/**", async (route) => {
-    const franchiseRes = [
-      {
-        id: 1,
-        name: "Brand New Franchise",
-        admins: [
-          {
-            id: 5,
-            name: "My New Franchise",
-            email: "newFranchise@jwt.com",
-          },
-        ],
-        stores: [
-          {
-            id: 1,
-            name: "a whole new store",
-            totalRevenue: 0,
-          },
-        ],
-      },
-    ];
-    expect(route.request().method()).toBe("GET");
-    await route.fulfill({ json: franchiseRes });
+  await page.route("*/**/api/franchise/**", async (route, request) => {
+    if (request.method() === "DELETE") {
+      const franchiseRes = { message: "franchise deleted" };
+
+      await route.fulfill({ json: franchiseRes });
+    } else {
+      const franchiseRes = [
+        {
+          id: 1,
+          name: "Brand New Franchise",
+          admins: [
+            {
+              id: 5,
+              name: "A New Franchise",
+              email: "newFranchise@jwt.com",
+            },
+          ],
+          stores: [
+            {
+              id: 1,
+              name: "a whole new store",
+              totalRevenue: 0,
+            },
+          ],
+        },
+      ];
+      expect(route.request().method()).toBe("GET");
+      await route.fulfill({ json: franchiseRes });
+    }
   });
 
   // Create a new store
@@ -184,15 +190,27 @@ async function basicInit(page) {
     await route.fulfill({ json: storeRes });
   });
 
+  // Delete a store
+  await page.route("*/**/api/franchise/**/store/**", async (route) => {
+    const storeRes = { message: "store deleted" };
+
+    expect(route.request().method()).toBe("DELETE");
+    await route.fulfill({ json: storeRes });
+  });
+
   // Order a pizza.
-  await page.route("*/**/api/order", async (route) => {
-    const orderReq = route.request().postDataJSON();
-    const orderRes = {
-      order: { ...orderReq, id: 23 },
-      jwt: "eyJpYXQ",
-    };
-    expect(route.request().method()).toBe("POST");
-    await route.fulfill({ json: orderRes });
+  await page.route("*/**/api/order", async (route, request) => {
+    if (request.method() === "POST") {
+      const orderReq = route.request().postDataJSON();
+      const orderRes = {
+        order: { ...orderReq, id: 23 },
+        jwt: "eyJpYXQ",
+      };
+      await route.fulfill({ json: orderRes });
+    } else {
+      expect(route.request().method()).toBe("GET");
+      await route.fulfill({ json: [] });
+    }
   });
 
   await page.goto("http://localhost:5173/");
@@ -261,7 +279,7 @@ test("register and logout", async ({ page }) => {
   await page.getByRole("link", { name: "Register" }).click();
   await page
     .getByRole("textbox", { name: "Full name" })
-    .fill("My New Franchise");
+    .fill("A New Franchise");
   await page
     .getByRole("textbox", { name: "Email address" })
     .fill("newFranchise@jwt.com");
@@ -331,4 +349,74 @@ test("create store", async ({ page }) => {
     page.getByRole("cell", { name: "a whole new store" })
   ).toBeVisible();
   await expect(page.getByRole("cell", { name: "₿" })).toBeVisible();
+});
+
+test("login and view diner dashboard", async ({ page }) => {
+  await basicInit(page);
+
+  // Login
+  await page.getByRole("link", { name: "Login" }).click();
+  await page
+    .getByRole("textbox", { name: "Email address" })
+    .fill("newFranchise@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("passfranchise");
+  await page.getByRole("button", { name: "Login" }).click();
+  await expect(
+    page.getByText("The web's best pizza", { exact: true })
+  ).toBeVisible();
+
+  // View diner dashboard
+  await page.getByRole("link", { name: "AF" }).click();
+  await expect(page.getByText("Your pizza kitchen")).toBeVisible();
+  await expect(page.getByText("name:")).toBeVisible();
+  await expect(page.getByText("email:")).toBeVisible();
+  await expect(page.getByText("role:")).toBeVisible();
+});
+
+test("delete store and franchise", async ({ page }) => {
+  await basicInit(page);
+
+  // Login admin
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("admin");
+  await page.getByRole("button", { name: "Login" }).click();
+  await expect(
+    page.getByText("The web's best pizza", { exact: true })
+  ).toBeVisible();
+
+  // Assert franchise and store visibility
+  await page.getByRole("link", { name: "Admin", exact: true }).click();
+  await expect(page.getByRole("cell", { name: "Spanish Fork" })).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: "Spanish Fork ₿ Close" }).getByRole("button")
+  ).toBeVisible();
+  await expect(page.getByRole("cell", { name: "PizzaCorp" })).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: "PizzaCorp Close" }).getByRole("button")
+  ).toBeVisible();
+
+  // Delete Store
+  await page
+    .getByRole("row", { name: "Spanish Fork ₿ Close" })
+    .getByRole("button")
+    .click();
+  await expect(page.getByText("Sorry to see you go")).toBeVisible();
+  await expect(
+    page.getByText("Are you sure you want to close the PizzaCorp store")
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+
+  // Delete Franchise
+  await page
+    .getByRole("row", { name: "PizzaCorp Close" })
+    .getByRole("button")
+    .click();
+  await expect(page.getByText("Sorry to see you go")).toBeVisible();
+  await expect(
+    page.getByText("Are you sure you want to close the PizzaCorp franchise")
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+
+  await page.getByRole("link", { name: "Logout" }).click();
 });
