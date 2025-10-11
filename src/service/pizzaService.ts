@@ -109,7 +109,7 @@ interface PizzaService {
   logout(): void;
   getUser(): Promise<User | null>;
   updateUser(user: User): Promise<User>;
-  listUser(page: number, limit: number, nameFilter: string): Promise<UserList>;
+  listUsers(page: number, limit: number, nameFilter: string): Promise<UserList>;
   getMenu(): Promise<Menu>;
   getOrders(user: User): Promise<OrderHistory>;
   order(order: Order): Promise<OrderResponse>;

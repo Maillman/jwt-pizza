@@ -104,7 +104,7 @@ class HttpPizzaService implements PizzaService {
     return Promise.resolve(user);
   }
 
-  async listUser(
+  async listUsers(
     page: number,
     limit: number,
     nameFilter: string
