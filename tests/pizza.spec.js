@@ -71,20 +71,27 @@ async function basicInit(page) {
   });
 
   // Update a valid user
-  await page.route("*/**/api/user/**", async (route) => {
-    const updateReq = route.request().postDataJSON();
-    const updateRes = { user: updateReq, token: "abcdef" };
-    for (const userEmail in validUsers) {
-      if (validUsers[userEmail].id === updateReq.id) {
-        const newUser = {
-          password: validUsers[userEmail].password,
-          ...updateReq,
-        };
-        delete validUsers[userEmail];
-        validUsers[updateReq.email] = newUser;
+  await page.route("*/**/api/user/**", async (route, request) => {
+    if (request.method() === "DELETE") {
+      const userRes = { message: "user deleted" };
 
-        await route.fulfill({ json: updateRes });
-        return;
+      await route.fulfill({ json: userRes });
+      return;
+    } else {
+      const updateReq = route.request().postDataJSON();
+      const updateRes = { user: updateReq, token: "abcdef" };
+      for (const userEmail in validUsers) {
+        if (validUsers[userEmail].id === updateReq.id) {
+          const newUser = {
+            password: validUsers[userEmail].password,
+            ...updateReq,
+          };
+          delete validUsers[userEmail];
+          validUsers[updateReq.email] = newUser;
+
+          await route.fulfill({ json: updateRes });
+          return;
+        }
       }
     }
     await route.fulfill({ status: 403, json: { error: "Unauthorized" } });
@@ -438,6 +445,7 @@ test("login and view admin dashboard", async ({ page }) => {
       .getByRole("button")
   ).toBeVisible();
   await page.getByRole("button", { name: "»" }).first().click();
+  await page.getByRole("button", { name: "«" }).first().click();
   await page.getByRole("textbox", { name: "Filter users" }).fill("test");
   await page
     .getByRole("cell", { name: "test Submit" })
@@ -456,6 +464,7 @@ test("login and view admin dashboard", async ({ page }) => {
     page.getByRole("row", { name: "PizzaCorp Close" }).getByRole("button")
   ).toBeVisible();
   await page.getByRole("button", { name: "»" }).nth(1).click();
+  await page.getByRole("button", { name: "«" }).nth(1).click();
   await page.getByRole("textbox", { name: "Filter franchises" }).fill("test");
   await page.getByRole("button", { name: "Submit" }).nth(1).click();
 });
@@ -510,7 +519,7 @@ test("delete store and franchise", async ({ page }) => {
   await page.getByRole("link", { name: "Logout" }).click();
 });
 
-test("updateUser", async ({ page }) => {
+test("update user", async ({ page }) => {
   await basicInit(page);
   const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
   await page.getByRole("link", { name: "Register" }).click();
@@ -542,4 +551,46 @@ test("updateUser", async ({ page }) => {
   await page.getByRole("link", { name: "pd" }).click();
 
   await expect(page.getByRole("main")).toContainText("pizza dinerx");
+});
+
+test("delete user", async ({ page }) => {
+  await basicInit(page);
+
+  // Login admin
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("admin");
+  await page.getByRole("button", { name: "Login" }).click();
+  await expect(
+    page.getByText("The web's best pizza", { exact: true })
+  ).toBeVisible();
+
+  // Assert user list visibility
+  await page.getByRole("link", { name: "Admin", exact: true }).click();
+
+  await expect(page.getByRole("cell", { name: "a@jwt.com" })).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: "newFranchise@jwt.com" })
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("row", { name: "Kai Chen a@jwt.com admin" })
+      .getByRole("button")
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("row", { name: "A New Franchise newFranchise@" })
+      .getByRole("button")
+  ).toBeVisible();
+
+  // Delete User
+  await page
+    .getByRole("row", { name: "A New Franchise newFranchise@" })
+    .getByRole("button")
+    .click();
+  await expect(page.getByText("Sorry to see you go")).toBeVisible();
+  await expect(page.getByText("Are you sure you want to")).toBeVisible();
+  await page.getByRole("button", { name: "Delete User" }).click();
+
+  await page.getByRole("link", { name: "Logout" }).click();
 });
