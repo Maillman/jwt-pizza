@@ -4,8 +4,11 @@ export interface TableColumn<T> {
   key: string;
   header: string;
   render: (item: T, index: number) => React.ReactNode;
+  renderSubRow?: (item: any, index: number) => React.ReactNode;
   className?: string;
+  subRowClassName?: string;
   colSpan?: number;
+  subRowColSpan?: number;
 }
 
 export interface TableRow<T> {
@@ -79,26 +82,10 @@ export default function Table<T>({
                           row.className || "border-neutral-500 border-t-2"
                         }
                       >
-                        {columns.map((column) => (
-                          <td
-                            key={column.key}
-                            className={
-                              column.className ||
-                              "text-start px-2 whitespace-nowrap text-sm text-gray-800"
-                            }
-                            colSpan={column.colSpan}
-                          >
-                            {column.render(row.data, rowIndex)}
-                          </td>
-                        ))}
-                      </tr>
-                      {/* Sub-rows */}
-                      {row.subRows?.map((subRow, subIndex) => (
-                        <tr
-                          key={`${rowIndex}-${subIndex}`}
-                          className={subRow.className || "bg-neutral-100"}
-                        >
-                          {columns.map((column) => (
+                        {columns.map((column) => {
+                          // Skip rendering if colSpan is 0
+                          if (column.colSpan === 0) return null;
+                          return (
                             <td
                               key={column.key}
                               className={
@@ -107,9 +94,42 @@ export default function Table<T>({
                               }
                               colSpan={column.colSpan}
                             >
-                              {column.render(subRow.data, subIndex)}
+                              {column.render(row.data, rowIndex)}
                             </td>
-                          ))}
+                          );
+                        })}
+                      </tr>
+                      {/* Sub-rows */}
+                      {row.subRows?.map((subRow, subIndex) => (
+                        <tr
+                          key={`${rowIndex}-${subIndex}`}
+                          className={subRow.className || "bg-neutral-100"}
+                        >
+                          {columns.map((column) => {
+                            const effectiveColSpan =
+                              column.subRowColSpan !== undefined
+                                ? column.subRowColSpan
+                                : column.colSpan;
+
+                            // Skip rendering if colSpan is 0
+                            if (effectiveColSpan === 0) return null;
+
+                            return (
+                              <td
+                                key={column.key}
+                                className={
+                                  column.subRowClassName ||
+                                  column.className ||
+                                  "text-start px-2 whitespace-nowrap text-sm text-gray-800"
+                                }
+                                colSpan={effectiveColSpan}
+                              >
+                                {column.renderSubRow
+                                  ? column.renderSubRow(subRow.data, subIndex)
+                                  : column.render(subRow.data, subIndex)}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>

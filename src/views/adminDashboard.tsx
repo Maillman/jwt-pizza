@@ -74,23 +74,75 @@ export default function AdminDashboard(props: Props) {
                   {franchise.name}
                 </span>
               ),
+              renderSubRow: () => null,
               className: "text-start px-2 whitespace-nowrap",
+              subRowClassName:
+                "text-end px-2 whitespace-nowrap text-sm text-gray-800",
             },
             {
               key: "franchisee",
               header: "Franchisee",
               render: (franchise) =>
                 franchise.admins?.map((o) => o.name).join(", "),
+              renderSubRow: () => null,
               className:
                 "text-start px-2 whitespace-nowrap text-sm font-normal text-gray-800",
               colSpan: 3,
+              subRowColSpan: 1,
+              subRowClassName:
+                "text-end px-2 whitespace-nowrap text-sm text-gray-800",
             },
-            // ... more columns
+            {
+              key: "store",
+              header: "Store",
+              render: () => null,
+              renderSubRow: (store) => store.name,
+              colSpan: 0,
+              subRowColSpan: 1,
+              subRowClassName:
+                "px-6 py-1 whitespace-nowrap text-end text-sm font-medium",
+            },
+            {
+              key: "revenue",
+              header: "Revenue",
+              render: () => null,
+              renderSubRow: (store) =>
+                `${store.totalRevenue?.toLocaleString()} ₿`,
+              colSpan: 0,
+              subRowColSpan: 1,
+            },
+            {
+              key: "action",
+              header: "Action",
+              render: (franchise) => (
+                <button
+                  type="button"
+                  className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800"
+                  onClick={() => closeFranchise(franchise)}
+                >
+                  <TrashIcon />
+                  Close
+                </button>
+              ),
+              renderSubRow: (store) => (
+                <button
+                  type="button"
+                  className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800"
+                  onClick={() => closeStore(store.franchise, store)}
+                >
+                  <TrashIcon />
+                  Close
+                </button>
+              ),
+              className:
+                "px-6 py-1 whitespace-nowrap text-end text-sm font-medium",
+              subRowColSpan: 1,
+            },
           ]}
           rows={franchiseList.franchises.map((franchise) => ({
             data: franchise,
             subRows: franchise.stores.map((store) => ({
-              data: store,
+              data: { ...store, franchise },
             })),
           }))}
           pagination={{
@@ -102,6 +154,7 @@ export default function AdminDashboard(props: Props) {
           filter={{
             placeholder: "Filter franchises",
             onFilter: (value) => filterFranchises(),
+            filterRef: filterFranchiseRef,
           }}
         />
         <div className="text-start py-8 px-4 sm:px-6 lg:px-8">
