@@ -91,6 +91,20 @@ export default function AdminDashboard(props: Props) {
               render: (user) => user.email,
             },
             {
+              key: "roles",
+              header: "Roles",
+              render: (user) => {
+                return (
+                  user.roles &&
+                  user.roles.map((role, index) => (
+                    <span key={index}>
+                      {index === 0 ? "" : ", "} {role.role}
+                    </span>
+                  ))
+                );
+              },
+            },
+            {
               key: "action",
               header: "Action",
               render: (user) => (
