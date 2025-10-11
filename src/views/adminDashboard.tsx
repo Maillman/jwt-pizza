@@ -63,6 +63,12 @@ export default function AdminDashboard(props: Props) {
     navigate("/admin-dashboard/create-franchise");
   }
 
+  async function deleteUser(user: User) {
+    navigate("/admin-dashboard/delete-user", {
+      state: { user: user },
+    });
+  }
+
   async function closeFranchise(franchise: Franchise) {
     navigate("/admin-dashboard/close-franchise", {
       state: { franchise: franchise },
@@ -121,7 +127,7 @@ export default function AdminDashboard(props: Props) {
                 <button
                   type="button"
                   className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800"
-                  onClick={() => console.log(user)}
+                  onClick={() => deleteUser(user)}
                 >
                   <TrashIcon />
                   Remove User
