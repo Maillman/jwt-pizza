@@ -418,11 +418,31 @@ test("login and view admin dashboard", async ({ page }) => {
     page.getByText("The web's best pizza", { exact: true })
   ).toBeVisible();
 
-  // Assert franchise and store visibility
+  // Enter admin dashboard
   await page.getByRole("link", { name: "Admin", exact: true }).click();
+
+  // Assert user list visibility
+  await expect(page.getByRole("cell", { name: "a@jwt.com" })).toBeVisible();
+  await expect(
+    page.getByRole("cell", { name: "newFranchise@jwt.com" })
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("row", { name: "Kai Chen a@jwt.com admin" })
+      .getByRole("button")
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("row", { name: "A New Franchise newFranchise@" })
+      .getByRole("button")
+  ).toBeVisible();
+
+  // Assert franchise and store visibility
   await expect(page.getByRole("cell", { name: "Spanish Fork" })).toBeVisible();
   await expect(
-    page.getByRole("row", { name: "Spanish Fork ₿ Close" }).getByRole("button")
+    page
+      .getByRole("row", { name: "Spanish Fork 0 ₿ Close" })
+      .getByRole("button")
   ).toBeVisible();
   await expect(page.getByRole("cell", { name: "PizzaCorp" })).toBeVisible();
   await expect(
@@ -446,7 +466,9 @@ test("delete store and franchise", async ({ page }) => {
   await page.getByRole("link", { name: "Admin", exact: true }).click();
   await expect(page.getByRole("cell", { name: "Spanish Fork" })).toBeVisible();
   await expect(
-    page.getByRole("row", { name: "Spanish Fork ₿ Close" }).getByRole("button")
+    page
+      .getByRole("row", { name: "Spanish Fork 0 ₿ Close" })
+      .getByRole("button")
   ).toBeVisible();
   await expect(page.getByRole("cell", { name: "PizzaCorp" })).toBeVisible();
   await expect(
@@ -455,7 +477,7 @@ test("delete store and franchise", async ({ page }) => {
 
   // Delete Store
   await page
-    .getByRole("row", { name: "Spanish Fork ₿ Close" })
+    .getByRole("row", { name: "Spanish Fork 0 ₿ Close" })
     .getByRole("button")
     .click();
   await expect(page.getByText("Sorry to see you go")).toBeVisible();
