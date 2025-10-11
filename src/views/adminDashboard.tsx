@@ -33,19 +33,31 @@ export default function AdminDashboard(props: Props) {
 
   const [userPage, setUserPage] = React.useState(0);
   const [franchisePage, setFranchisePage] = React.useState(0);
+  const [currentUserFilter, setCurrentUserFilter] = React.useState("*");
+  const filterUserRef = React.useRef<HTMLInputElement>(null);
+  const [currentFranchiseFilter, setCurrentFranchiseFilter] =
+    React.useState("*");
   const filterFranchiseRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     (async () => {
-      setFranchiseList(await pizzaService.getFranchises(franchisePage, 3, "*"));
+      setFranchiseList(
+        await pizzaService.getFranchises(
+          franchisePage,
+          3,
+          `*${currentFranchiseFilter}*`
+        )
+      );
     })();
-  }, [props.user, franchisePage]);
+  }, [props.user, currentFranchiseFilter, franchisePage]);
 
   React.useEffect(() => {
     (async () => {
-      setUserList(await pizzaService.listUsers(userPage, 3, "*"));
+      setUserList(
+        await pizzaService.listUsers(userPage, 10, `*${currentUserFilter}*`)
+      );
     })();
-  }, [props.user, userPage]);
+  }, [props.user, currentUserFilter, userPage]);
 
   function createFranchise() {
     navigate("/admin-dashboard/create-franchise");
@@ -63,14 +75,12 @@ export default function AdminDashboard(props: Props) {
     });
   }
 
-  async function filterFranchises() {
-    setFranchiseList(
-      await pizzaService.getFranchises(
-        franchisePage,
-        10,
-        `*${filterFranchiseRef.current?.value}*`
-      )
-    );
+  async function filterUsers(filterString: string) {
+    setCurrentUserFilter(filterString);
+  }
+
+  async function filterFranchises(filterString: string) {
+    setCurrentFranchiseFilter(filterString);
   }
 
   let response = <NotFound />;
@@ -122,6 +132,17 @@ export default function AdminDashboard(props: Props) {
             },
           ]}
           rows={userList.users.map((user) => ({ data: user }))}
+          pagination={{
+            currentPage: userPage,
+            hasMore: userList.more,
+            onPrevious: () => setUserPage(userPage - 1),
+            onNext: () => setUserPage(userPage + 1),
+          }}
+          filter={{
+            placeholder: "Filter users",
+            onFilter: () => filterUsers(filterUserRef.current?.value || ""),
+            filterRef: filterUserRef,
+          }}
         />
         <Table
           title="Franchises"
@@ -212,7 +233,8 @@ export default function AdminDashboard(props: Props) {
           }}
           filter={{
             placeholder: "Filter franchises",
-            onFilter: (value) => filterFranchises(),
+            onFilter: () =>
+              filterFranchises(filterFranchiseRef.current?.value || ""),
             filterRef: filterFranchiseRef,
           }}
         />
