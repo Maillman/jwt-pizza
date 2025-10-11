@@ -173,7 +173,6 @@ export default function AdminDashboard(props: Props) {
             {
               key: "store",
               header: "Store",
-              render: () => null,
               renderSubRow: (store) => store.name,
               colSpan: 0,
               subRowColSpan: 1,
@@ -183,7 +182,6 @@ export default function AdminDashboard(props: Props) {
             {
               key: "revenue",
               header: "Revenue",
-              render: () => null,
               renderSubRow: (store) =>
                 `${
                   store.totalRevenue ? store.totalRevenue.toLocaleString() : "0"

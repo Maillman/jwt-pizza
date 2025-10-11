@@ -3,7 +3,7 @@ import React from "react";
 export interface TableColumn<T> {
   key: string;
   header: string;
-  render: (item: T, index: number) => React.ReactNode;
+  render?: (item: T, index: number) => React.ReactNode;
   renderSubRow?: (item: any, index: number) => React.ReactNode;
   className?: string;
   subRowClassName?: string;
@@ -83,8 +83,9 @@ export default function Table<T>({
                         }
                       >
                         {columns.map((column) => {
-                          // Skip rendering if colSpan is 0
-                          if (column.colSpan === 0) return null;
+                          // Skip rendering if colSpan is 0 or render not defined
+                          if (column.colSpan === 0 || !column.render)
+                            return null;
                           return (
                             <td
                               key={column.key}
@@ -111,8 +112,12 @@ export default function Table<T>({
                                 ? column.subRowColSpan
                                 : column.colSpan;
 
-                            // Skip rendering if colSpan is 0
-                            if (effectiveColSpan === 0) return null;
+                            // Skip rendering if colSpan is 0 or both render and renderSubRow not defined
+                            if (
+                              effectiveColSpan === 0 ||
+                              !(column.renderSubRow || column.render)
+                            )
+                              return null;
 
                             return (
                               <td
@@ -126,7 +131,9 @@ export default function Table<T>({
                               >
                                 {column.renderSubRow
                                   ? column.renderSubRow(subRow.data, subIndex)
-                                  : column.render(subRow.data, subIndex)}
+                                  : column.render
+                                  ? column.render(subRow.data, subIndex)
+                                  : null}
                               </td>
                             );
                           })}

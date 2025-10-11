@@ -142,6 +142,7 @@ async function basicInit(page) {
         { id: 3, name: "PizzaCorp", stores: [{ id: 7, name: "Spanish Fork" }] },
         { id: 4, name: "topSpot", stores: [] },
       ],
+      more: true,
     };
     expect(route.request().method()).toBe("GET");
     await route.fulfill({ json: franchiseRes });
@@ -421,7 +422,7 @@ test("login and view admin dashboard", async ({ page }) => {
   // Enter admin dashboard
   await page.getByRole("link", { name: "Admin", exact: true }).click();
 
-  // Assert user list visibility
+  // Assert user list visibility and functionality
   await expect(page.getByRole("cell", { name: "a@jwt.com" })).toBeVisible();
   await expect(
     page.getByRole("cell", { name: "newFranchise@jwt.com" })
@@ -436,8 +437,14 @@ test("login and view admin dashboard", async ({ page }) => {
       .getByRole("row", { name: "A New Franchise newFranchise@" })
       .getByRole("button")
   ).toBeVisible();
+  await page.getByRole("button", { name: "»" }).first().click();
+  await page.getByRole("textbox", { name: "Filter users" }).fill("test");
+  await page
+    .getByRole("cell", { name: "test Submit" })
+    .getByRole("button")
+    .click();
 
-  // Assert franchise and store visibility
+  // Assert franchise and store visibility and functionality
   await expect(page.getByRole("cell", { name: "Spanish Fork" })).toBeVisible();
   await expect(
     page
@@ -448,6 +455,9 @@ test("login and view admin dashboard", async ({ page }) => {
   await expect(
     page.getByRole("row", { name: "PizzaCorp Close" }).getByRole("button")
   ).toBeVisible();
+  await page.getByRole("button", { name: "»" }).nth(1).click();
+  await page.getByRole("textbox", { name: "Filter franchises" }).fill("test");
+  await page.getByRole("button", { name: "Submit" }).nth(1).click();
 });
 
 test("delete store and franchise", async ({ page }) => {
