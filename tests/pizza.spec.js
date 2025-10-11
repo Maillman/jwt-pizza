@@ -6,6 +6,7 @@ test("home page", async ({ page }) => {
   expect(await page.title()).toBe("JWT Pizza");
 });
 
+//The function that determines all routes
 async function basicInit(page) {
   let loggedInUser;
   const validUsers = {
@@ -93,6 +94,14 @@ async function basicInit(page) {
   await page.route("*/**/api/user/me", async (route) => {
     expect(route.request().method()).toBe("GET");
     await route.fulfill({ json: loggedInUser });
+  });
+
+  // Return the list of users
+  await page.route(/\/api\/user(\?.*)?$/, async (route) => {
+    expect(route.request().method()).toBe("GET");
+    const users = Object.values(validUsers);
+    const listUsersRes = { users: users, more: true };
+    await route.fulfill({ json: listUsersRes });
   });
 
   // A standard menu
@@ -395,6 +404,30 @@ test("login and view diner dashboard", async ({ page }) => {
   await expect(page.getByText("name:").first()).toBeVisible();
   await expect(page.getByText("email:").first()).toBeVisible();
   await expect(page.getByText("role:")).toBeVisible();
+});
+
+test("login and view admin dashboard", async ({ page }) => {
+  await basicInit(page);
+
+  // Login admin
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("admin");
+  await page.getByRole("button", { name: "Login" }).click();
+  await expect(
+    page.getByText("The web's best pizza", { exact: true })
+  ).toBeVisible();
+
+  // Assert franchise and store visibility
+  await page.getByRole("link", { name: "Admin", exact: true }).click();
+  await expect(page.getByRole("cell", { name: "Spanish Fork" })).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: "Spanish Fork ₿ Close" }).getByRole("button")
+  ).toBeVisible();
+  await expect(page.getByRole("cell", { name: "PizzaCorp" })).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: "PizzaCorp Close" }).getByRole("button")
+  ).toBeVisible();
 });
 
 test("delete store and franchise", async ({ page }) => {
