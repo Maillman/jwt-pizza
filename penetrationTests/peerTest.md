@@ -15,6 +15,7 @@ Kobey's Self Attack
 | Classification | Identification and Authentication Failures                                                              |
 | Severity       | 3 (Medium)                                                                                              |
 | Description    | Successful login using empty string as password                                                         |
+| Images         | ![emptyStringPassword](/penetrationTests/emptyStringPassword.png)                                       |
 | Corrections    | Update jwt pizza service to send 404 response when password is empty                                    |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -23,6 +24,7 @@ Kobey's Self Attack
 | Classification | Security Misconfiguration                                                                               |
 | Severity       | 2 (High)                                                                                                |
 | Description    | Able to login using test diner, franchisee, admin credentials                                           |
+| Images         | ![loginWithDefaultCredentials](/penetrationTests/loginWithDefaultCredentials.png)                       |
 | Corrections    | Update passwords for each of these users                                                                |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -31,6 +33,7 @@ Kobey's Self Attack
 | Classification | Cryptographic Failures                                                                                  |
 | Severity       | 1 (Critical)                                                                                            |
 | Description    | Able to change pizza price to anything in transit                                                       |
+| Images         | ![changePizzaPrice](/penetrationTests/changePizzaPrice.png)                                             |
 | Corrections    | Added price validation to ensure purchased pizza price matches menu item                                |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -39,6 +42,7 @@ Kobey's Self Attack
 | Classification | Identification and Authentication Failures                                                              |
 | Severity       | 2 (High)                                                                                                |
 | Description    | Able to delete any or all franchises as any user                                                        |
+| Images         | ![d1](/penetrationTests/deleteFranchiseAnyUser.png)![d2](/penetrationTests/deleteFranchiseAnyUser2.png) |
 | Corrections    | Added check for admin privileges before allowing a franchise to be deleted                              |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -47,6 +51,7 @@ Kobey's Self Attack
 | Classification | Identification and Authentication Failures                                                              |
 | Severity       | 4 (Low)                                                                                                 |
 | Description    | Able to view the menu even as an unauthenticated user                                                   |
+| Images         | ![viewMenu](/penetrationTests/viewMenuAsUnauthenticatedUser.png)                                        |
 | Corrections    | Added authentication step to ensure get menu endpoint is only able to be accessed by authenticated user |
 
 Melvin's Self Attack
@@ -59,6 +64,7 @@ Melvin's Self Attack
 | Classification | Identification and Authentication Failures                               |
 | Severity       | 2 (High)                                                                 |
 | Description    | Multiple registrations of the same email/password combination            |
+| Images         | ![multipleRegistrations](/penetrationTests/multipleRegistrations.png)    |
 | Corrections    | Check if duplicate user already exists                                   |
 |                |                                                                          |
 | Item           | Result                                                                   |
@@ -67,6 +73,7 @@ Melvin's Self Attack
 | Classification | Security Misconfiguration                                                |
 | Severity       | 2 (High)                                                                 |
 | Description    | Able to login using test diner, franchisee, admin credentials            |
+| Images         | ![loginDefaultCreds](/penetrationTests/loginWithDefaultCredentials.png)  |
 | Corrections    | Update passwords for each of these users                                 |
 |                |                                                                          |
 | Item           | Result                                                                   |
@@ -75,6 +82,7 @@ Melvin's Self Attack
 | Classification | Identification and Authentication Failures                               |
 | Severity       | 3 (Medium)                                                               |
 | Description    | Successful login using empty string as password                          |
+| Images         | ![emptyStringPassword](/penetrationTests/emptyStringPassword.png)        |
 | Corrections    | Update jwt pizza service to send 404 response when password is empty     |
 |                |                                                                          |
 | Item           | Result                                                                   |
@@ -83,6 +91,7 @@ Melvin's Self Attack
 | Classification | Cryptographic Failures                                                   |
 | Severity       | 1 (Critical)                                                             |
 | Description    | Able to change pizza price to anything in transit                        |
+| Images         | ![changePizzaPrice](/penetrationTests/changePizzaPrice.png)              |
 | Corrections    | Added price validation to ensure purchased pizza price matches menu item |
 |                |                                                                          |
 | Item           | Result                                                                   |
@@ -91,6 +100,7 @@ Melvin's Self Attack
 | Classification | Identification and Authentication Failures                               |
 | Severity       | 3 (Medium)                                                               |
 | Description    | Able to view all users without admin privileges                          |
+| Images         | ![viewUsersNoAdmin](/penetrationTests/viewUsersWithoutBeingAdmin.png)    |
 | Corrections    | Check privileges before hitting the get users endpoint                   |
 |                |                                                                          |
 | Item           | Result                                                                   |
@@ -99,6 +109,7 @@ Melvin's Self Attack
 | Classification | Injection                                                                |
 | Severity       | N/A                                                                      |
 | Description    | SQL injection to drop database via the username in registration          |
+| Images         | ![SQLInjection](/penetrationTests/attemptSQLInjection.png)               |
 | Corrections    | N/A                                                                      |
 ## Peer Attack
 Attacking Melvin's Website
@@ -110,6 +121,7 @@ Attacking Melvin's Website
 | Classification | Security Misconfiguration                                                                               |
 | Severity       | 3 (Medium)                                                                                              |
 | Description    | Unsuccessful login using default diner, admin credentials                                               |
+| Images         | ![loginDefaultCredsFail](/penetrationTests/loginWithDefaultCredentialsFailure.png)                      |
 | Corrections    | No Correction                                                                                           |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -118,6 +130,7 @@ Attacking Melvin's Website
 | Classification | Security Misconfiguration                                                                               |
 | Severity       | N/A                                                                                                     |
 | Description    | Password required on login endpoint                                                                     |
+| Images         | ![emptyStringPasswordFail](/penetrationTests/emptyStringPasswordFailure.png)                            |
 | Corrections    | No Correction                                                                                           |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -126,6 +139,7 @@ Attacking Melvin's Website
 | Classification | Cryptographic Failures                                                                                  |
 | Severity       | N/A                                                                                                     |
 | Description    | Unable to change pizza price to anything in transit, stack shows on response                            |
+| Images         | ![changePizzaPriceFail](/penetrationTests/changePizzaPriceFailure.png)                                  |
 | Corrections    | Remove Showing Stack on Reponse                                                                         |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -134,6 +148,7 @@ Attacking Melvin's Website
 | Classification | Identification and Authentication Failures                                                              |
 | Severity       | 2 (High)                                                                                                |
 | Description    | Able to delete any or all franchises as any user                                                        |
+| Images         | ![d2b](/penetrationTests/deleteFranchiseAnyUser2b.png)                                                    |
 | Corrections    | Added check for admin privileges before allowing a franchise to be deleted                              |
 |                |                                                                                                         |
 | Item           | Result                                                                                                  |
@@ -142,6 +157,7 @@ Attacking Melvin's Website
 | Classification | Identification and Authentication Failures                                                              |
 | Severity       | 4 (Low)                                                                                                 |
 | Description    | Able to view the menu even as an unauthenticated user                                                   |
+| Images         | ![viewMenu](/penetrationTests/viewMenuAsUnauthenticatedUser.png)                                        |
 | Corrections    | Added authentication step to ensure get menu endpoint is only able to be accessed by authenticated user |
 
 Attacking Kobey's Website
@@ -153,6 +169,7 @@ Attacking Kobey's Website
 | Classification | Identification and Authentication Failures                      |
 | Severity       | 2 (High)                                                        |
 | Description    | Multiple registrations of the same email/password combination   |
+| Images         | ![multRegisters](/penetrationTests/multipleRegistrations.png)   |
 | Corrections    | Check if duplicate user already exists                          |
 |                |                                                                 |
 | Item           | Result                                                          |
@@ -161,6 +178,7 @@ Attacking Kobey's Website
 | Classification | Security Misconfiguration                                       |
 | Severity       | N/A                                                             |
 | Description    | Logging in with known email and password                        |
+| Images         | ![dFl](/penetrationTests/loginWithDefaultCredentialsFailure.png)|
 | Corrections    | N/A                                                             |
 |                |                                                                 |
 | Item           | Result                                                          |
@@ -169,6 +187,7 @@ Attacking Kobey's Website
 | Classification | Identification and Authentication Failures                      |
 | Severity       | N/A                                                             |
 | Description    | Logging in with empty string                                    |
+| Images         | ![emptyFail](/penetrationTests/emptyStringPasswordFailure.png)  |
 | Corrections    | N/A                                                             |
 |                |                                                                 |
 | Item           | Result                                                          |
@@ -177,6 +196,7 @@ Attacking Kobey's Website
 | Classification | Cryptographic Failures                                          |
 | Severity       | N/A                                                             |
 | Description    | Changing the price of a pizza in transit                        |
+| Images         | ![changePriceFl](/penetrationTests/changePizzaPriceFailure.png) |
 | Corrections    | N/A                                                             |
 |                |                                                                 |
 | Item           | Result                                                          |
@@ -185,6 +205,7 @@ Attacking Kobey's Website
 | Classification | Identification and Authentication Failures                      |
 | Severity       | 3 (Medium)                                                      |
 | Description    | Able to view all users without admin privileges                 |
+| Images         | ![viewUsers](/penetrationTests/viewUsersWithoutBeingAdmin.png)  |
 | Corrections    | Check privileges before hitting the get users endpoint          |
 |                |                                                                 |
 | Item           | Result                                                          |
@@ -193,6 +214,7 @@ Attacking Kobey's Website
 | Classification | Injection                                                       |
 | Severity       | N/A                                                             |
 | Description    | SQL injection to drop database via the username in registration |
+| Images         | ![SQLInjection](/penetrationTests/attemptSQLInjection.png)      |
 | Corrections    | N/A                                                             |
 
 ## Combined Summary of Learnings
